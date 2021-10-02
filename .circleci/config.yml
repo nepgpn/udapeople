@@ -32,7 +32,7 @@ jobs:
             # Your code here
             command: |
               cd backend
-              install i 
+              npm i
               npm run build
             #  exit 1
         - save_cache:

@@ -4,19 +4,26 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      # Add parameter here   
+    #Add parameter here  
+      WORKFLOW_ID: 
+        type: string   
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
             # Your code here
-            exit 1
+            aws cloudformation delete-stack -stack-name frontend-<<paratemeters.WORKFLOW_ID>>
+            aws cloudformation delete-stack -stack-name backend-<<paratemeters.WORKFLOW_ID>>
+            aws s3 rm s3://udapeople-<<parameters.WORKFOW_ID>> --recursive
+          #  exit 1
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      # Add parameter here     
+      # Add parameter here
+      WORKFLOW_ID: 
+        type: string     
     steps:
       - run:
           name: Revert migrations
@@ -29,7 +36,8 @@ commands:
             #  cd ~/project/backend
             #  npm install
             #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+            
+          #    exit 1
             fi
             
 jobs:
@@ -42,9 +50,12 @@ jobs:
           keys: [frontend-build]
       - run:
           name: Build front-end
+        #Your code here
           command: |
-            # Your code here
-            exit 1
+            cd frontend
+            npm i
+            npm run build  
+        #    exit 1
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -58,9 +69,12 @@ jobs:
           keys: [backend-build]
       - run:
           name: Back-end build
+          # Your code here
           command: |
-             # Your code here
-             exit 1
+            cd backend
+            install i 
+            npm run build
+          #  exit 1
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build

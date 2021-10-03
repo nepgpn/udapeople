@@ -15,7 +15,7 @@ commands:
           command: |
             aws cloudformation delete-stack -stack-name frontend-<<paratemeters.WORKFLOW_ID>>
             aws cloudformation delete-stack -stack-name backend-<<paratemeters.WORKFLOW_ID>>
-            aws s3 rm s3://udapeople-<<parameters.WORKFOW_ID>> --recursive
+            aws s3 rm s3://udapeople-<<parameters.WORKFLOW_ID>> --recursive
            
 jobs:
   build-frontend:

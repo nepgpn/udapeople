@@ -79,7 +79,6 @@ jobs:
             name: frontend-scan
             command: |
               cd frontend
-            #  npm audit --audit-level=critical
               npm audit fix --audit-level=critical --force
         - slack/notify:
             event: fail
@@ -99,7 +98,6 @@ jobs:
             name: backend-scan
             command: |
               cd backend
-            #  npm audit --audit-level=critical
               npm audit fix --audit-level=critical --force
         - slack/notify:
             event: fail
@@ -108,7 +106,7 @@ jobs:
             event: pass
             template: success_tagged_deploy_1
 
-
+  
 workflows:
   default:
     jobs:

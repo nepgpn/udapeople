@@ -207,6 +207,8 @@ workflows:
   default:
     jobs:
       - deploy-infrastructure
+      - configure-infrastructure:
+          requires: [deploy-infrastructure
       
 
 

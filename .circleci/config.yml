@@ -253,8 +253,8 @@ jobs:
             cd backend
             npm install
             npm run migrations > migrations.txt
-            cat migration.txt
-            migration_status= $(cat migration.txt|grep -c "has been executed sucessfully")
+            cat migrations.txt
+            migration_status= $(cat migrations.txt|grep -c "has been executed sucessfully")
             if [ $migration_status > 0  ]; then exit 0; else exit 1; fi;
 
       - run:

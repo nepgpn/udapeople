@@ -30,7 +30,7 @@ commands:
           when: on_fail
           command: |
             status= $(curl -H "token: <<parameters.token_id>>" \
-              --request GET https://api.memstash.io/values/migration-<<parameters.workflow_id>>)
+              --request GET https://api.memstash.io/values/migration-<<parameters.token_id>>)
             echo $status
 
             if [[ "${status}"" == 1 ]]; then           

@@ -131,7 +131,7 @@ jobs:
           name: Ensure back-end infrastructure exists
           command: |
             pwd
-            la -la . ..
+            ls -la . ..
             peintenv
             aws cloudformation deploy \
               --template-file ./.circleci/files/backend.yml \

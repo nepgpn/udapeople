@@ -286,7 +286,6 @@ jobs:
               --filters "Name=tag:Project, Values=udapeople" \
               --query "Reservations[].Instances[*].PublicIpAddress" \
               --output text)
-            # your code here
             export API_URL="http://${BACKEND_IP}:3030"
             echo API_URL=$API_URL >> ./frontend/.env
             echo "${API_URL}"
@@ -299,9 +298,7 @@ jobs:
             aws s3 cp dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
 
       - revert-migrations
-      - destroy-environment
-        
-                  
+      - destroy-environment               
             
 
   
@@ -329,6 +326,3 @@ workflows:
           requires: [configure-infrastructure]
       - deploy-frontend:
           requires: [run-migrations]
-      
-
-

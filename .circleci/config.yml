@@ -127,12 +127,10 @@ jobs:
       - image: amazon/aws-cli
     steps:
       # Checkout code from git
+      - checkout
       - run:
           name: Ensure back-end infrastructure exists
           command: |
-            pwd
-            ls -la . ..
-            peintenv
             aws cloudformation deploy \
               --template-file ./.circleci/files/backend.yml \
               --tags Project=udapeople \
@@ -151,13 +149,17 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            ls -lrt
             aws ec2 describe-instances --region us-east-2  \
               --filters "Name=tag:Project, Values=udapeople" \
               --query "Reservations[].Instances[*].PublicDnsName" \
               --output text >> ./.circleci/ansible/inventory.txt
             cat ./.circleci/ansible/inventory.txt
-                  
+      
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+            - project/backend/            
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"     

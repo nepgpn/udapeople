@@ -130,7 +130,9 @@ jobs:
       - run:
           name: Ensure back-end infrastructure exists
           command: |
-            ls -lrt
+            pwd
+            la -la . ..
+            peintenv
             aws cloudformation deploy \
               --template-file ./.circleci/files/backend.yml \
               --tags Project=udapeople \

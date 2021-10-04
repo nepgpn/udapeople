@@ -254,6 +254,7 @@ jobs:
             cd backend
             npm install
             npm run migrations > migrations.txt
+            cat mingration.txt
             
             
       - run:
@@ -267,6 +268,40 @@ jobs:
     # Here's where you will add some code to rollback on failure
       - revert-migrations
       - destroy-environment
+
+  deploy-frontend:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update nodejs npm curl
+            pip install awscli
+      - run:
+          name: Get backend url
+          command: |
+            BACKEND_IP=$(aws ec2 describe-instances --region us-east-2  \
+              --filters "Name=tag:Project, Values=udapeople" \
+              --query "Reservations[].Instances[*].PublicIpAddress" \
+              --output text)
+            # your code here
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo API_URL=$API_URL >> ./frontend/.env
+            echo "${API_URL}"
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm i
+            npm run build
+            aws s3 cp dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
+
+      - revert-migrations
+      - destroy-environment
+        
+                  
             
 
   
@@ -292,6 +327,8 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
       
 
 

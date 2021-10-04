@@ -29,7 +29,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            export STATUS= $(curl -H "token: <<parameters.token_id>>" \
+            STATUS=$(curl -H "token: <<parameters.token_id>>" \
               --request GET https://api.memstash.io/values/migration-<<parameters.token_id>>)
             echo $STATUS
 

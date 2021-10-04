@@ -17,6 +17,30 @@ commands:
             aws cloudformation delete-stack --stack-name frontend-<<parameters.workflow_id>>
             aws cloudformation delete-stack --stack-name backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
+
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    parameters: 
+    workflow_id: 
+      type: string
+      default: "${CIRCLE_WORKFLOW_ID:0:7}"     
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          # Add when this will run
+          command: |
+            status= $(curl -H "token: <<parameters.workflow_id>>" \
+              --request GET https://api.memstash.io/values/migration_<<parameters.workflow_id>>)
+            echo $status
+
+            if [[ "${status}"" == 1 ]]; then           
+              cd ~/project/backend
+              npm i
+              npm run migration:revert
+            exit 1
+            fi
+            
            
 jobs:
   build-frontend:
@@ -183,22 +207,70 @@ jobs:
           name: Configure server
           command: |
             echo ENVIRONMENT=production > "backend/.env"
-            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
-            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
-            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
-            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
             echo NODE_ENV=production >> "backend/.env"
             echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
             echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
             echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            cat backend/.env
             ansible-playbook \
               -i ./.circleci/ansible/inventory.txt \
               ./.circleci/ansible/configure-server.yml
                 
       # Here's where you will add some code to rollback on failure
       - destroy-environment
+
+  run-migrations:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: prepare for migration
+          command: |
+            echo ENVIRONMENT=production > "backend/.env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            apt update
+            apt install -y awscli
+            cat  backend/.env
+
+      - run:
+          name: Run migrations
+          command: |      
+            cd backend
+            npm install
+            npm run migrations > migrations.txt
+            cat migration.txt
+            migration_status= $(cat migration.txt|grep -c "has been executed sucessfully")
+            if [ $migration_status > 0  ]; then exit 0; else exit 1; fi;
+
+      - run:
+          name: Send migration results to memstash
+          command: |
+            curl -H "Content-Type: text/plain" \
+              -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" \
+              --request PUT --data "1" \
+              https://api.memstash.io/values/migration_{CIRCLE_WORKFLOW_ID:0:7}
+            
+    # Here's where you will add some code to rollback on failure
+      - revert-migrations
+      - destory-environment
             
 
   
@@ -208,6 +280,8 @@ workflows:
       - deploy-infrastructure
       - configure-infrastructure:
           requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       
 
 

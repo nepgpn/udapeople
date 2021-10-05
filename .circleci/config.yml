@@ -350,6 +350,11 @@ jobs:
       - run:
           name: Deploy backend
           command: |
+            aws ec2 describe-instances --region us-east-2  \
+                --filters "Name=tag:Project, Values=udapeople" \
+                --query "Reservations[].Instances[*].PublicIpAddress" \
+                --output text >> ./.circleci/ansible/inventory.txt
+            cat ./.circleci/ansible/inventory.txt
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook \
               -i ./.circleci/ansible/inventory.txt \

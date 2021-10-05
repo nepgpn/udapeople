@@ -84,6 +84,18 @@ jobs:
         - save_cache:
             paths: [backend/dist]
             key: backend-dist
+        - run:
+            name: Copy compiled backend for future use in ansible
+            command: |
+              mkdir /tmp/workspace/
+              cp ./backend/package.json /tmp/workspace/
+              cd backend/dist
+              tar -zcvf /tmp/workspace/backend.tar.gz ./
+        - persist_to_workspace:
+            root: /tmp/workspace
+            paths:
+              - backend.tar.gz
+              - package.json
         - slack/notify:
             event: fail
             template: basic_fail_1    
@@ -323,18 +335,18 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["8e:b8:bf:7e:14:4f:4e:f7:5b:0f:f7:aa:7f:14:1d:9e"]
       - attach_workspace:
-          at: ~/
-      - restore_cache:
-            keys: ["backend-dist"]  
+          at: /tmp/workspace
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible openssh-client tar gzip curl
+            apk add --update ansible openssh-client tar nodejs npm curl 
+            ansible-galaxy install weareinteractive.environment
+            pip install awscli
       - run:
-          name: tar backend
+          name: Create .env file and log folders
           command: |
-            cd /home
-            tar czf backend.tar.gz -P /home/circleci/project/backend/dist
+            echo $(pwd)
+            ls /root/project/backend
       - run:
           name: Deploy backend
           command: |
@@ -342,39 +354,18 @@ jobs:
             ansible-playbook \
               -i ./.circleci/ansible/inventory.txt \
               ./.circleci/ansible/deploy-backend.yml
-
       - run:
           name: Install AWS CLI for rollback
           when: on_fail
           command: |
             apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
       - revert-migrations
-      - destroy-environment    
+      - destroy-environment
 
-  
+    
 workflows:
   default:
     jobs:
       - build-frontend
       - build-backend
-      - test-frontend:
-          requires: [build-frontend]
-      - test-backend:
-          requires: [build-backend]
-      - scan-frontend:
-          requires: [build-frontend]
-      - scan-backend:
-          requires: [build-backend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: [dev]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations,deploy-frontend]
+      

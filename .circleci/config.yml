@@ -33,7 +33,8 @@ commands:
               --request GET https://api.memstash.io/values/migration-<<parameters.token_id>>)
             echo $STATUS
 
-            if (( $STATUS==1 )); then           
+            if [ "$STATUS" == "1" ]
+            then           
               cd ~/project/backend
               npm i
               npm run migration:revert
@@ -443,8 +444,26 @@ jobs:
              
       # Here's where you will add some code to rollback on failure
       - revert-migrations
-      - destroy-environment   
+      - destroy-environment
 
+  cleanup:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Remove old stacks and files
+          command: |
+            export OldWorkflowID=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" \
+              --request GET https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID:0:7})
+            echo "OldWorkflowID: ${OldWorkflowID}"
+
+            if [ "${OldWorkflowID}" != "${CIRCLE_WORKFLOW_ID:0:7}" ]
+            then
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            fi
     
 workflows:
   default:
@@ -476,4 +495,5 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      
+      - cleanup:
+          requires: [cloudfront-update]

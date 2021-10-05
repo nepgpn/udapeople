@@ -24,7 +24,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 9100
           ToPort: 9100
-          SourceSecurityGroupId: !GetAtt prometheus.GroupId
+          SourceSecurityGroupId: sg-03ae4c6d93c8e1a26
 
   EC2Instance:
     Type: AWS::EC2::Instance

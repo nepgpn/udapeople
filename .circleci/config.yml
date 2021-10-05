@@ -343,11 +343,7 @@ jobs:
             apk add --update ansible openssh-client tar nodejs npm curl 
             ansible-galaxy install weareinteractive.environment
             pip install awscli
-      - run:
-          name: Create .env file and log folders
-          command: |
-            echo $(pwd)
-            ls /root/project/backend
+     
       - run:
           name: Deploy backend
           command: |

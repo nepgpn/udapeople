@@ -329,9 +329,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update nodejs npm curl openshh-client tar gzip
-            ansible-galaxy install weareinteractive.environment
-            pip install awscli
+            apk add --update nodejs npm curl openssh-client tar gzip curl
       - run:
           name: tar backend
           command: |
@@ -343,6 +341,12 @@ jobs:
             ansible-playbook \
               -i ./.circleci/ansible/inventory.txt \
               ./.circleci/ansible/deploy-backend.yml
+
+      - run:
+          name: Install AWS CLI for rollback
+          when: on_fail
+          command: |
+            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
       - revert-migrations
       - destroy-environment                
             

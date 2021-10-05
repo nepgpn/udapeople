@@ -329,7 +329,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update nodejs npm curl openssh-client tar gzip curl
+            apk add --update ansible openssh-client tar gzip curl
       - run:
           name: tar backend
           command: |
@@ -377,4 +377,4 @@ workflows:
       - deploy-frontend:
           requires: [run-migrations]
       - deploy-backend:
-          requires: [run-migrations]
+          requires: [run-migrations,deploy-frontend]

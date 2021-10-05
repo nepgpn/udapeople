@@ -401,18 +401,49 @@ jobs:
             echo $URL
             if curl -s ${URL} | grep "Welcome"
             then
-              return 0
-            else
               return 1
+            else
+              return 0
             fi
       # Here's where you will add some code to rollback on failure
-      - run:
-          name: Install AWS CLI for rollback
-          when: on_fail
-          command: |
-            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
       - revert-migrations
-      - destroy-environment 
+      - destroy-environment
+
+  cloudfront-update:
+    docker:
+      - image: python:3.7-alpine3.11 
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl && pip3 install --upgrade pip && pip3 install awscli
+      - run:
+          name: Save old Workflow ID
+          command: |
+            export OldWorkflowID=$(aws cloudformation list-exports \
+              --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+
+            echo $OldWorkflowID
+
+            curl -H "Content-Type: text/plain" \
+              -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" \
+              --request PUT --data $OldWorkflowID \
+              https://api.memstash.io/values/migration-${CIRCLE_WORKFLOW_ID:0:7}
+
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+              --template-file ./.circleci/files/cloudfront.yml \
+              --tags Project=udapeople \
+              --stack-name "udapeople-cloudfront-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+        
+             
+      # Here's where you will add some code to rollback on failure
+      - revert-migrations
+      - destroy-environment   
 
     
 workflows:
@@ -443,4 +474,6 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
+          requires: [smoke-test]
       

@@ -59,6 +59,9 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
+      - slack/notify:
+            event: fail
+            template: basic_fail_1
 
   build-backend:
       docker:
@@ -78,6 +81,12 @@ jobs:
         - save_cache:
             paths: [backend/node_modules]
             key: backend-build
+        - save_cache:
+            paths: [backend/dist]
+            key: backend-dist
+        - slack/notify:
+            event: fail
+            template: basic_fail_1    
 
   test-frontend:
       docker:
@@ -91,6 +100,9 @@ jobs:
             command: |
               cd frontend
               npm run test
+        - slack/notify:
+            event: fail
+            template: basic_fail_1
 
                 
   test-backend:
@@ -105,6 +117,9 @@ jobs:
             command: |
               cd backend
               npm run test
+        - slack/notify:
+            event: fail
+            template: basic_fail_1
 
   scan-frontend:
       docker:
@@ -298,7 +313,38 @@ jobs:
             aws s3 cp --recursive dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
 
       - revert-migrations
-      - destroy-environment               
+      - destroy-environment
+
+  deploy-backend:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["8e:b8:bf:7e:14:4f:4e:f7:5b:0f:f7:aa:7f:14:1d:9e"]
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+            keys: ["backend-dist"]  
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update nodejs npm curl openshh-client tar gzip
+            ansible-galaxy install weareinteractive.environment
+            pip install awscli
+      - run:
+          name: tar backend
+          command: |
+            cd /home
+            tar czf backend.tar.gz -P /home/circleci/project/backend/dist
+      - run:
+          name: Deploy backend
+          command: |
+            ansible-playbook \
+              -i ./.circleci/ansible/inventory.txt \
+              ./.circleci/ansible/deploy-backend.yml
+      - revert-migrations
+      - destroy-environment                
             
 
   
@@ -325,4 +371,6 @@ workflows:
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
           requires: [run-migrations]

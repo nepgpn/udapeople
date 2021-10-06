@@ -1,3 +1,7 @@
-github url: https://github.com/nepgpn/udapeople
+GitHub repository: https://github.com/nepgpn/udapeople
+Frontend S3 Bucket (green): https://dhz7fmwv4rqu9.cloudfront.net
+CloudFront distribution url (blue): 
+URLs to deployed application back-end:
+URL to your Prometheus Server: 
 
 

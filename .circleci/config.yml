@@ -385,11 +385,11 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            if curl -s https://${BACKEND_URL}:3030/api/status
+            if curl -s http://${BACKEND_URL}:3030/api/status
             then
-              return 1
+              exit 0
             else
-              return 0
+              exit 1
             fi
       - run:
           name: Frontend smoke test.
@@ -398,9 +398,9 @@ jobs:
             echo $URL
             if curl -s ${URL} | grep "Welcome"
             then
-              return 1
+              exit 0
             else
-              return 0
+              exit 1
             fi
       # Here's where you will add some code to rollback on failure
       - revert-migrations
@@ -479,7 +479,7 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
-              only: [main]
+              only: [dev]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:

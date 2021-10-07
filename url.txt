@@ -1,0 +1,5 @@
+GitHub repository URL : https://github.com/nepgpn/udapeople.git
+S3 Bucket (green candidate) URL: http://udapeople-8df4c7d.s3-website.us-east-2.amazonaws.com
+CloudFront distribution URL: https://dhz7fmwv4rqu9.cloudfront.net
+Backend URL: ec2-3-144-148-25.us-east-2.compute.amazonaws.com
+

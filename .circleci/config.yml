@@ -372,21 +372,20 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update curl && pip3 install --upgrade pip && pip3 install awscli
-            
-      - run:
-          name: Get backend url
-          command: |
-            export BACKEND_URL=$(aws ec2 describe-instances --region us-east-2  \
-                --filters "Name=tag:Project, Values=udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
-                --query "Reservations[].Instances[*].PublicIpAddress" \
-                --output text)
-                         
+                                   
       - run:
           name: Backend smoke test.
           command: |
-            echo $BACKEND_URL
+            export BACKEND_IP=$(aws ec2 describe-instances --region us-east-2  \
+                --filters "Name=tag:Project, Values=udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --query "Reservations[].Instances[*].PublicIpAddress" \
+                --output text)
+                          
+            echo $BACKEND_IP
 
-            if curl -s http://${BACKEND_URL}:3030/api/status
+            BACKEND_URL="http://${BACKEND_IP}:3030/api/status"
+            echo $BACKEND_IP
+            if curl -s http://${BACKEND_IP}:3030/api/status
             then
               return 1
             else

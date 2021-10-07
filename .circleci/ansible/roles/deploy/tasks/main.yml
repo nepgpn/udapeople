@@ -1,4 +1,3 @@
-# some code reference was taken from udacity devops training course and github similiar projects.
 - name: Create app folder
   become: yes
   file:

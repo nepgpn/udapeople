@@ -32,10 +32,9 @@ commands:
             STATUS=$(curl -H "token: <<parameters.token_id>>" \
               --request GET https://api.memstash.io/values/migration-<<parameters.token_id>>)
             echo $STATUS
-
+            cd ~/project/backend
             if [ "$STATUS" == "1" ]
             then           
-              cd ~/project/backend
               npm install
               npm run migrations:revert
             fi
@@ -391,7 +390,7 @@ jobs:
             then
               return 1
             else
-              retrun 0
+              return 0
             fi
       - run:
           name: Frontend smoke test.

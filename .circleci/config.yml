@@ -381,16 +381,17 @@ jobs:
                 --filters "Name=tag:Project, Values=udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
                 --query "Reservations[].Instances[*].PublicIpAddress" \
                 --output text)
-            echo $BACKEND_URL
-             
+                         
       - run:
           name: Backend smoke test.
           command: |
+            echo $BACKEND_URL
+
             if curl -s http://${BACKEND_URL}:3030/api/status
             then
-              exit 0
+              return 1
             else
-              exit 1
+              retrun 0
             fi
       - run:
           name: Frontend smoke test.
@@ -399,9 +400,9 @@ jobs:
             echo $URL
             if curl -s ${URL} | grep "Welcome"
             then
-              exit 0
+              return 1
             else
-              exit 1
+              return 0
             fi
       # Here's where you will add some code to rollback on failure
       - revert-migrations

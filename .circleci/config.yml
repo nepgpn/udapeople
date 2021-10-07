@@ -86,7 +86,7 @@ jobs:
             paths: [backend/dist]
             key: backend-dist
         - run:
-            name: Copy compiled backend for future use in ansible
+            name: copy the compiled code to tmp workspace for backend copy later
             command: |
               mkdir /tmp/workspace/
               cp ./backend/package.json /tmp/workspace/
@@ -343,7 +343,7 @@ jobs:
             apk add --update ansible openssh-client tar nodejs npm curl 
             ansible-galaxy install weareinteractive.environment
             pip install awscli
-     
+      
       - run:
           name: Deploy backend
           command: |

@@ -36,7 +36,7 @@ commands:
             if [ "$STATUS" == "1" ]
             then           
               cd ~/project/backend
-              npm i
+              npm install
               npm run migrations:revert
             fi
             
@@ -373,6 +373,7 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update curl && pip3 install --upgrade pip && pip3 install awscli
+            
       - run:
           name: Get backend url
           command: |
